@@ -1,8 +1,8 @@
 {
-  "name": "copy-webpack-plugin",
-  "version": "4.5.2",
+  "name": "inq-webpack-plugin-copy",
+  "version": "1.0.0",
   "description": "Copy files && directories with webpack",
-  "author": "Len Boyette",
+  "author": "Crespo Wang",
   "license": "MIT",
   "main": "dist/index.js",
   "engines": {

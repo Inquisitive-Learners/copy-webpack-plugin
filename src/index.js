@@ -1,4 +1,6 @@
 import path from 'path';
+import _ from 'lodash';
+import fs from 'fs-extra';
 import preProcessPattern from './preProcessPattern';
 import processPattern from './processPattern';
 
@@ -7,10 +9,10 @@ function CopyWebpackPlugin(patterns = [], options = {}) {
         throw new Error('[copy-webpack-plugin] patterns must be an array');
     }
 
-    // Defaults debug level to 'warning'
+  // Defaults debug level to 'warning'
     options.debug = options.debug || 'warning';
 
-    // Defaults debugging to info if only true is specified
+  // Defaults debugging to info if only true is specified
     if (options.debug === true) {
         options.debug = 'info';
     }
@@ -40,7 +42,7 @@ function CopyWebpackPlugin(patterns = [], options = {}) {
         log(msg, 2);
     }
 
-    const apply = (compiler) => {
+    const apply = compiler => {
         let fileDependencies;
         let contextDependencies;
         const written = {};
@@ -81,28 +83,30 @@ function CopyWebpackPlugin(patterns = [], options = {}) {
                 concurrency: options.concurrency
             };
 
-            if (globalRef.output === '/' &&
-                compiler.options.devServer &&
-                compiler.options.devServer.outputPath) {
+            if (
+        globalRef.output === '/' &&
+        compiler.options.devServer &&
+        compiler.options.devServer.outputPath
+      ) {
                 globalRef.output = compiler.options.devServer.outputPath;
             }
 
             const tasks = [];
 
-            patterns.forEach((pattern) => {
+            patterns.forEach(pattern => {
                 tasks.push(
-                    Promise.resolve()
-                    .then(() => preProcessPattern(globalRef, pattern))
-                    // Every source (from) is assumed to exist here
-                    .then((pattern) => processPattern(globalRef, pattern))
-                );
+          Promise.resolve()
+            .then(() => preProcessPattern(globalRef, pattern))
+            // Every source (from) is assumed to exist here
+            .then(pattern => processPattern(globalRef, pattern))
+        );
             });
 
             Promise.all(tasks)
-            .catch((err) => {
-                compilation.errors.push(err);
-            })
-            .then(() => callback());
+        .catch(err => {
+            compilation.errors.push(err);
+        })
+        .then(() => callback());
         };
 
         const afterEmit = (compilation, cb) => {
@@ -116,41 +120,66 @@ function CopyWebpackPlugin(patterns = [], options = {}) {
             let addFileDependency;
             if (Array.isArray(compilation.fileDependencies)) {
                 compilationFileDependencies = new Set(compilation.fileDependencies);
-                addFileDependency = (file) => compilation.fileDependencies.push(file);
+                addFileDependency = file => compilation.fileDependencies.push(file);
             } else {
                 compilationFileDependencies = compilation.fileDependencies;
-                addFileDependency = (file) => compilation.fileDependencies.add(file);
+                addFileDependency = file => compilation.fileDependencies.add(file);
             }
 
             let compilationContextDependencies;
             let addContextDependency;
             if (Array.isArray(compilation.contextDependencies)) {
-                compilationContextDependencies = new Set(compilation.contextDependencies);
-                addContextDependency = (file) => compilation.contextDependencies.push(file);
+                compilationContextDependencies = new Set(
+          compilation.contextDependencies
+        );
+                addContextDependency = file =>
+          compilation.contextDependencies.push(file);
             } else {
                 compilationContextDependencies = compilation.contextDependencies;
-                addContextDependency = (file) => compilation.contextDependencies.add(file);
+                addContextDependency = file =>
+          compilation.contextDependencies.add(file);
             }
 
-            // Add file dependencies if they're not already tracked
+      // Add file dependencies if they're not already tracked
             for (const file of fileDependencies) {
                 if (compilationFileDependencies.has(file)) {
-                    debug(`not adding ${file} to change tracking, because it's already tracked`);
+                    debug(
+            `not adding ${file} to change tracking, because it's already tracked`
+          );
                 } else {
                     debug(`adding ${file} to change tracking`);
                     addFileDependency(file);
                 }
             }
 
-            // Add context dependencies if they're not already tracked
+      // Add context dependencies if they're not already tracked
             for (const context of contextDependencies) {
                 if (compilationContextDependencies.has(context)) {
-                    debug(`not adding ${context} to change tracking, because it's already tracked`);
+                    debug(
+            `not adding ${context} to change tracking, because it's already tracked`
+          );
                 } else {
                     debug(`adding ${context} to change tracking`);
                     addContextDependency(context);
                 }
             }
+
+            let output = compiler.options.output.path;
+            if (
+        output === '/' &&
+        compiler.options.devServer &&
+        compiler.options.devServer.outputPath
+      ) {
+                output = compiler.options.devServer.outputPath;
+            }
+            _.forEach(written, value => {
+                if (value.copyPermissions) {
+                    debug(`restoring permissions to ${value.webpackTo}`);
+                    const mask =
+            fs.constants.S_IRWXU | fs.constants.S_IRWXG | fs.constants.S_IRWXO;
+                    fs.chmodSync(path.join(output, value.webpackTo), value.perms & mask);
+                }
+            });
 
             callback();
         };
