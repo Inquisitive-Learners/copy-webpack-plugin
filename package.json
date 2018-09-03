@@ -1,6 +1,6 @@
 {
   "name": "inq-webpack-plugin-copy",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Copy files && directories with webpack",
   "author": "Crespo Wang",
   "license": "MIT",
@@ -43,9 +43,9 @@
     "rimraf": "^2.6.2",
     "standard-version": "^4.2.0"
   },
-  "homepage": "https://github.com/webpack-contrib/copy-webpack-plugin",
-  "bugs": "https://github.com/webpack-contrib/copy-webpack-plugin/issues",
-  "repository": "https://github.com/webpack-contrib/copy-webpack-plugin.git",
+  "homepage": "https://github.com/Inquisitive-Learners/copy-webpack-plugin",
+  "bugs": "https://github.com/Inquisitive-Learners/copy-webpack-plugin/issues",
+  "repository": "https://github.com/Inquisitive-Learners/copy-webpack-plugin.git",
   "keywords": [
     "webpack",
     "plugin",
